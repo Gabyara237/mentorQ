@@ -1,8 +1,6 @@
 
 from pydantic import BaseModel
 
-from app.models.user import UserRole
-
 
 class UserLogin(BaseModel):
     username: str
@@ -14,4 +12,4 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None
+    user_id: str | None
