@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.database import get_session
 from app.models.user import User
@@ -32,8 +32,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],session
     except (TypeError, ValueError):
         raise credentials_exception
     
-    query = select(User).where(User.id == user_id)
-    user =session.exec(query).first()
+    user =session.get(User,user_id)
     if user is None:
         raise credentials_exception
     
