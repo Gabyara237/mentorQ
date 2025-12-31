@@ -13,7 +13,7 @@ class User(SQLModel, table =True):
     id: int | None = Field(default = None, primary_key =True)
     username: str = Field(sa_column = Column("username",VARCHAR(50), unique=True,index= True)) 
     email: str = Field(sa_column = Column("email", VARCHAR(100), unique=True, index =True))
-    password: str 
+    password_hash: str 
     role: UserRole
     bio: str | None = Field(default=None)
     avatar: str | None = Field(default=None)
