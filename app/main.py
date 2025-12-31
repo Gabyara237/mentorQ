@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.database import create_db_and_tables
+from app.routers import auth
 
-from app.models.user import User
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -11,6 +11,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="MentorQ", lifespan=lifespan)
+
+app.include_router(auth.router,prefix="/auth", tags=["auth"]  )
 
 @app.get("/")
 def root():
