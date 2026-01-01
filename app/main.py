@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from app.database import create_db_and_tables
 from app.routers import auth
 
+import app.models
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
