@@ -13,6 +13,7 @@ class TicketResponse(BaseModel):
     id: int
     title: str
     description:str
+    tags:list[str]= []
     status: TicketStatus
     student_id:int
     assigned_mentor_id: int | None
