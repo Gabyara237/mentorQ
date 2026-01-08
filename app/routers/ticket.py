@@ -1,4 +1,5 @@
 from typing import Annotated
+from app.services.ticket_tag_service import TicketTagService
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 
@@ -14,7 +15,9 @@ router = APIRouter()
 @router.post("/", response_model=TicketResponse,status_code=status.HTTP_201_CREATED)
 def create_ticket(session: Annotated[Session,Depends(get_session)], ticket_data: TicketCreate, current_user: Annotated[User, Depends(get_current_user)]):
     ticket = TicketService.create_ticket(session=session, ticket_data=ticket_data, student_id=current_user.id)
-    return ticket
+    tags = TicketTagService.get_ticket_tags(session,ticket.id)
+
+    return TicketResponse(**ticket.model_dump(), tags=tags)
 
 @router.get("/me", response_model=list[TicketResponse])
 def get_user_tickets(session: Annotated[Session,Depends(get_session)], current_user: Annotated[User, Depends(get_current_user)]):

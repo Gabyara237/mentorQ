@@ -8,6 +8,7 @@ from app.models.ticket import TicketStatus
 class TicketCreate(BaseModel):
     title: str
     description: str
+    tags: list[str] = []
 
 class TicketResponse(BaseModel):
     id: int

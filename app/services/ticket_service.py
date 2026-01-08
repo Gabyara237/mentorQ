@@ -2,6 +2,7 @@
 from sqlmodel import Session, select
 from app.models.ticket import Ticket
 from app.schemas.ticket import TicketCreate
+from app.services.ticket_tag_service import TicketTagService
 
 
 
@@ -18,6 +19,12 @@ class TicketService:
         session.commit()
         session.refresh(new_ticket)
         
+        for tag_name in ticket_data.tags:
+            try:
+                TicketTagService.add_tag_to_ticket(session,  new_ticket.id,tag_name)
+            except:
+                pass
+                    
         return new_ticket
 
     @staticmethod
