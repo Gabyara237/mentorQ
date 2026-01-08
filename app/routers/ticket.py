@@ -22,7 +22,13 @@ def create_ticket(session: Annotated[Session,Depends(get_session)], ticket_data:
 @router.get("/me", response_model=list[TicketResponse])
 def get_user_tickets(session: Annotated[Session,Depends(get_session)], current_user: Annotated[User, Depends(get_current_user)]):
     tickets = TicketService.get_user_tickets(session=session,student_id = current_user.id)
-    return tickets
+    return [
+        TicketResponse(
+            **ticket.model.dump(),
+            tags = TicketTagService.get_ticket_tags(session,ticket.id)
+        )
+        for ticket in tickets
+    ]
 
 @router.get("/{ticket_id}",response_model=TicketResponse)
 def get_ticket_by_id(session: Annotated[Session, Depends(get_session)], ticket_id :int, current_user:Annotated[User, Depends(get_current_user)]):
@@ -39,5 +45,5 @@ def get_ticket_by_id(session: Annotated[Session, Depends(get_session)], ticket_i
             status_code= status.HTTP_403_FORBIDDEN,
             detail="Not authorized to view this ticket"
         )
-    
-    return ticket
+    tags = TicketTagService.get_ticket_tags(session,ticket.id)
+    return TicketResponse(**ticket.model_dump(),tags=tags)
