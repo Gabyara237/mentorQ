@@ -37,3 +37,15 @@ class TicketService:
     @staticmethod
     def get_ticket_by_id(session: Session,ticket_id: int)->Ticket |None:
         return session.get(Ticket,ticket_id)
+    
+    @staticmethod
+    def get_open_tickets(session: Session, mentor_id: int)-> list[Ticket]:
+        query = select(Ticket).where(Ticket.status =="open").order_by(Ticket.created_at.desc())
+        tickets = session.exec(query).all()
+
+        return tickets
+    
+    @staticmethod
+    def get_mentor_assigned_tickets(session:Session, mentor_id: int) -> list[Ticket]:
+        query = select(Ticket).where(Ticket.assigned_at==mentor_id).order_by(Ticket.created_at.desc())
+        Tickets = session.exec(query).all()
