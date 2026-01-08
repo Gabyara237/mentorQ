@@ -1,6 +1,7 @@
 
+from datetime import datetime
 from sqlmodel import Session, select
-from app.models.ticket import Ticket
+from app.models.ticket import Ticket, TicketStatus
 from app.schemas.ticket import TicketCreate
 from app.services.ticket_tag_service import TicketTagService
 
@@ -49,3 +50,23 @@ class TicketService:
     def get_mentor_assigned_tickets(session:Session, mentor_id: int) -> list[Ticket]:
         query = select(Ticket).where(Ticket.assigned_at==mentor_id).order_by(Ticket.created_at.desc())
         Tickets = session.exec(query).all()
+
+    @staticmethod
+    def accept_ticket(session: Session, ticket_id: int, mentor_id: int )-> Ticket | None:
+        ticket = session.get(Ticket, ticket_id)
+
+        if not ticket:
+            return None
+        
+        if ticket.status != TicketStatus.OPEN:
+            return None
+        
+        
+        ticket.status = TicketStatus.ASSIGNED
+        ticket.assigned_mentor_id = mentor_id
+        ticket.assigned_at = datetime.utcnow()
+
+        session.commit()
+        session.refresh(ticket)
+
+        return ticket

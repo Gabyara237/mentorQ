@@ -1,4 +1,6 @@
+from datetime import datetime
 from typing import Annotated
+from app.models.ticket import TicketStatus
 from app.services.ticket_tag_service import TicketTagService
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -71,3 +73,24 @@ def get_ticket_by_id(session: Annotated[Session, Depends(get_session)], ticket_i
         )
     tags = TicketTagService.get_ticket_tags(session,ticket.id)
     return TicketResponse(**ticket.model_dump(),tags=tags)
+
+
+@router.post("/{ticket_id}/accept", response_model=TicketResponse)
+def accept_ticket(session: Annotated[Session, Depends(get_session)], ticket_id: int, current_user : Annotated[User, Depends(get_current_user)]):
+
+    if current_user.role != UserRole.MENTOR:
+        raise HTTPException(
+            status_code=403,
+            detail="Only mentors can accept tickets"
+        )
+    
+    ticket = TicketService.accept_ticket(session, ticket_id,current_user.id)
+
+    if not ticket:
+        raise HTTPException(
+            status_code= status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found or already accepted"
+        )
+    tags = TicketTagService.get_ticket_tags(session, ticket.id)
+    return TicketResponse(**ticket.model_dump(), tags=tags)
+
