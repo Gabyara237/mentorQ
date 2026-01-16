@@ -6,6 +6,8 @@ from sqlmodel.pool import StaticPool
 from app.models.user import UserRole
 from app.schemas.user import UserCreate
 from app.services.auth_service import AuthService
+from app.schemas.ticket import TicketCreate
+from app.services.ticket_service import TicketService
 
 
 @pytest.fixture(name="session")
@@ -44,3 +46,23 @@ def test_mentor(session: Session):
         role=UserRole.MENTOR,
     )
     return AuthService.create_user(session, user_data)
+
+
+
+@pytest.fixture
+def open_ticket(session, test_student):
+    data = TicketCreate(
+        title="Need help with FastAPI",
+        description="Dependency injection confusion",
+        tags=[]
+    )
+    return TicketService.create_ticket(session, data, student_id=test_student.id)
+
+@pytest.fixture
+def second_open_ticket(session, test_student):
+    data = TicketCreate(
+        title="SQLModel relationships",
+        description="Many-to-many setup",
+        tags=[]
+    )
+    return TicketService.create_ticket(session, data, student_id=test_student.id)
