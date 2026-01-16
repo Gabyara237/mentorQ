@@ -1,5 +1,5 @@
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
 from app.models.tag import Tag
@@ -15,7 +15,9 @@ class TagService:
         tag = session.exec(query).first()
 
         if tag:
-            raise HTTPException(status_code=409, detail="Tag already registered")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, 
+                detail="Tag already registered")
         
         new_tag = Tag(
             name= normalized_name

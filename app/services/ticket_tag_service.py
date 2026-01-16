@@ -1,5 +1,5 @@
 
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 from sqlmodel import Session, select
 from app.models.tag import Tag
 from app.models.ticket import Ticket
@@ -13,7 +13,9 @@ class TicketTagService:
         ticket=session.get(Ticket, ticket_id)
 
         if not ticket:
-            raise HTTPException(status_code=404, detail="Ticket not found")
+            raise HTTPException(
+                status_code= status.HTTP_404_NOT_FOUND, 
+                detail="Ticket not found")
         
         tag = TagService.get_or_create_tag(session, tag_name)
 
@@ -21,7 +23,9 @@ class TicketTagService:
         ticket_tag= session.exec(query).first()
 
         if ticket_tag:
-            raise HTTPException(status_code=409, detail="Ticket Tag already registered")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, 
+                detail="Ticket Tag already registered")
 
         new_ticket_tag=TicketTag(
             ticket_id= ticket_id,
@@ -37,13 +41,18 @@ class TicketTagService:
     def remove_tag_from_ticket(session: Session,ticket_id:int, tag_id:int) -> None:
         ticket = session.get(Ticket,ticket_id)
         if not ticket:
-            raise HTTPException(status_code=404, detail="Ticket not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ticket not found"
+            )
             
         query= select(TicketTag).where((TicketTag.ticket_id==ticket_id) & (TicketTag.tag_id==tag_id))
         ticket_tag = session.exec(query).first()
 
         if not ticket_tag:
-          raise HTTPException(status_code=404,detail="Ticket Tag not found")
+          raise HTTPException(
+              status_code=status.HTTP_404_NOT_FOUND,
+              detail="Ticket Tag not found")
         
         session.delete(ticket_tag)
         session.commit()

@@ -1,5 +1,6 @@
 
 from datetime import datetime
+from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from app.models.ticket import Ticket, TicketStatus
 from app.schemas.ticket import TicketCreate
@@ -23,7 +24,7 @@ class TicketService:
         for tag_name in ticket_data.tags:
             try:
                 TicketTagService.add_tag_to_ticket(session,  new_ticket.id,tag_name)
-            except:
+            except Exception:
                 pass
                     
         return new_ticket
@@ -40,16 +41,17 @@ class TicketService:
         return session.get(Ticket,ticket_id)
     
     @staticmethod
-    def get_open_tickets(session: Session, mentor_id: int)-> list[Ticket]:
-        query = select(Ticket).where(Ticket.status =="open").order_by(Ticket.created_at.desc())
+    def get_open_tickets(session: Session )-> list[Ticket]:
+        query = select(Ticket).where(Ticket.status ==TicketStatus.OPEN).order_by(Ticket.created_at.desc())
         tickets = session.exec(query).all()
-
         return tickets
     
     @staticmethod
     def get_mentor_assigned_tickets(session:Session, mentor_id: int) -> list[Ticket]:
-        query = select(Ticket).where(Ticket.assigned_at==mentor_id).order_by(Ticket.created_at.desc())
-        Tickets = session.exec(query).all()
+        query = select(Ticket).where(Ticket.assigned_mentor_id == mentor_id).order_by(Ticket.created_at.desc())
+        tickets = session.exec(query).all()
+        return tickets
+
 
     @staticmethod
     def accept_ticket(session: Session, ticket_id: int, mentor_id: int )-> Ticket | None:
@@ -59,8 +61,10 @@ class TicketService:
             return None
         
         if ticket.status != TicketStatus.OPEN:
-            return None
-        
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Ticket is not available for acceptance"
+            )
         
         ticket.status = TicketStatus.ASSIGNED
         ticket.assigned_mentor_id = mentor_id
