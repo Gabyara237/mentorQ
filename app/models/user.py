@@ -1,5 +1,7 @@
 
+import datetime
 from enum import Enum
+from time import timezone
 from sqlmodel import VARCHAR, Column, SQLModel, Field
 
 class UserRole(str, Enum):
@@ -18,3 +20,4 @@ class User(SQLModel, table =True):
     bio: str | None = Field(default=None)
     avatar: str | None = Field(default=None)
     is_available: bool = Field(default=True)
+

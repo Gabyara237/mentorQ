@@ -1,5 +1,5 @@
 
-from datetime import datetime
+from datetime import datetime,timezone
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from app.models.ticket import Ticket, TicketStatus
@@ -68,7 +68,7 @@ class TicketService:
         
         ticket.status = TicketStatus.ASSIGNED
         ticket.assigned_mentor_id = mentor_id
-        ticket.assigned_at = datetime.utcnow()
+        ticket.assigned_at = datetime.now(timezone.utc)
 
         session.commit()
         session.refresh(ticket)
