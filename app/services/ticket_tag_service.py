@@ -51,12 +51,31 @@ class TicketTagService:
         return None
 
     @staticmethod
-    def get_ticket_tags(session: Session, ticket_id: int)-> list[str]:
-        ticket = session.get(Ticket, ticket_id)
-        if not ticket:
-            raise HTTPException(status_code=404, detail="Ticket not found")
-        
-        statement = (select(Tag.name).join(TicketTag, TicketTag.tag_id==Tag.id).where(TicketTag.ticket_id == ticket_id))
-        tag_names = session.exec(statement).all()
+    def get_ticket_tags(session: Session, ticket_id: int) -> list[str]:
+        statement = (
+            select(Tag.name)
+            .join(TicketTag, TicketTag.tag_id == Tag.id)
+            .where(TicketTag.ticket_id == ticket_id)
+        )
+        return session.exec(statement).all()
 
-        return tag_names
+
+    @staticmethod
+    def get_tags_for_tickets(session: Session, ticket_ids: list[int]) -> dict[int, list[str]]:
+       
+        if not ticket_ids:
+            return {}
+
+        statement = (
+            select(TicketTag.ticket_id, Tag.name)
+            .join(Tag, Tag.id == TicketTag.tag_id)
+            .where(TicketTag.ticket_id.in_(ticket_ids))
+        )
+
+        rows = session.exec(statement).all()
+
+        tags_map: dict[int, list[str]] = {tid: [] for tid in ticket_ids}
+        for ticket_id, tag_name in rows:
+            tags_map[ticket_id].append(tag_name)
+
+        return tags_map

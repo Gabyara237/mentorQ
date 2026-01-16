@@ -1,6 +1,4 @@
-from datetime import datetime
 from typing import Annotated
-from app.models.ticket import TicketStatus
 from app.services.ticket_tag_service import TicketTagService
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -29,31 +27,39 @@ def get_user_tickets(session: Annotated[Session,Depends(get_session)], current_u
     else:
         tickets = TicketService.get_mentor_assigned_tickets(session=session,mentor_id=current_user.id)
     
+    ticket_ids = [ticket.id for ticket in tickets]
+    tags_map = TicketTagService.get_tags_for_tickets(session, ticket_ids)
+
     return [
         TicketResponse(
             **ticket.model_dump(),
-            tags = TicketTagService.get_ticket_tags(session,ticket.id)
+            tags=tags_map.get(ticket.id, [])
         )
         for ticket in tickets
     ]
 
+
 @router.get('/', response_model=list[TicketResponse] )
-def get_tickets(session: Annotated[Session, Depends(get_session)], current_user: Annotated[User,Depends(get_current_user)]):
+def get_open_tickets(session: Annotated[Session, Depends(get_session)], current_user: Annotated[User,Depends(get_current_user)]):
     
     if current_user.role != UserRole.MENTOR:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Only mentors can view available tickets"
         )
     
-    tickets = TicketService.get_open_tickets(session=session,mentor_id =current_user.id)
+    tickets = TicketService.get_open_tickets(session=session)
+    ticket_ids = [ticket.id for ticket in tickets]
+    tags_map = TicketTagService.get_tags_for_tickets(session, ticket_ids)
+
     return [
         TicketResponse(
-           **ticket.model_dump(),
-            tags = TicketTagService.get_ticket_tags(session,ticket.id)
+            **ticket.model_dump(),
+            tags=tags_map.get(ticket.id, [])
         )
         for ticket in tickets
     ]
+
 
 
 @router.get("/{ticket_id}",response_model=TicketResponse)
@@ -80,7 +86,7 @@ def accept_ticket(session: Annotated[Session, Depends(get_session)], ticket_id: 
 
     if current_user.role != UserRole.MENTOR:
         raise HTTPException(
-            status_code=403,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Only mentors can accept tickets"
         )
     
