@@ -1,4 +1,5 @@
 from typing import Annotated
+from app.models.ticket import TicketStatus
 from app.services.ticket_tag_service import TicketTagService
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -62,23 +63,36 @@ def get_open_tickets(session: Annotated[Session, Depends(get_session)], current_
 
 
 
-@router.get("/{ticket_id}",response_model=TicketResponse)
-def get_ticket_by_id(session: Annotated[Session, Depends(get_session)], ticket_id :int, current_user:Annotated[User, Depends(get_current_user)]):
-    ticket = TicketService.get_ticket_by_id(session=session, ticket_id=ticket_id)  
-    
+@router.get("/{ticket_id}", response_model=TicketResponse)
+def get_ticket_by_id( session: Annotated[Session, Depends(get_session)], ticket_id: int, current_user: Annotated[User, Depends(get_current_user)]):
+    ticket = TicketService.get_ticket_by_id(session=session, ticket_id=ticket_id)
+
     if not ticket:
         raise HTTPException(
-            status_code = status.HTTP_404_NOT_FOUND,
-            detail ="Ticket not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found"
         )
-    
-    if ticket.student_id != current_user.id:
-        raise HTTPException(
-            status_code= status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this ticket"
-        )
-    tags = TicketTagService.get_ticket_tags(session,ticket.id)
-    return TicketResponse(**ticket.model_dump(),tags=tags)
+
+    if current_user.role == UserRole.STUDENT:
+        if ticket.student_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this ticket"
+            )
+
+    elif current_user.role == UserRole.MENTOR:
+        is_open = ticket.status == TicketStatus.OPEN
+        is_assigned_to_me = ticket.assigned_mentor_id == current_user.id
+
+        if not (is_open or is_assigned_to_me):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this ticket"
+            )
+
+    tags = TicketTagService.get_ticket_tags(session, ticket.id)
+    return TicketResponse(**ticket.model_dump(), tags=tags)
+
 
 
 @router.post("/{ticket_id}/accept", response_model=TicketResponse)
