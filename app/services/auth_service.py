@@ -1,5 +1,5 @@
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlmodel import Session, select
 from app.models.user import User
 from app.schemas.user import UserCreate
@@ -16,7 +16,9 @@ class AuthService:
         user = session.exec(query).first()
         
         if user:
-            raise HTTPException(status_code=409,detail="Username already registered")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already registered")
         
         
         normalized_email = user_data.email.strip().lower()
@@ -24,7 +26,9 @@ class AuthService:
         user = session.exec(query).first()
         
         if user:
-            raise HTTPException(status_code=409, detail="Email already registered")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, 
+                detail="Email already registered")
         
         password_hash = get_password_hash(user_data.password)
 
@@ -44,7 +48,7 @@ class AuthService:
     def authenticate_user(session: Session, username:str, password:str)-> User | None:
         
         normalized_username = username.strip().lower()
-        query = select(User).where(User.username==normalized_username)
+        query = select(User).where(User.username == normalized_username)
         user = session.exec(query).first()
 
         if not user:
