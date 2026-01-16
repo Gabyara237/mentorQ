@@ -28,7 +28,7 @@ def get_user_tickets(session: Annotated[Session,Depends(get_session)], current_u
     else:
         tickets = TicketService.get_mentor_assigned_tickets(session=session,mentor_id=current_user.id)
     
-    ticket_ids = [ticket.id for ticket in tickets]
+    ticket_ids = [ticket.id for ticket in tickets if ticket.id is not None]
     tags_map = TicketTagService.get_tags_for_tickets(session, ticket_ids)
 
     return [
@@ -50,7 +50,7 @@ def get_open_tickets(session: Annotated[Session, Depends(get_session)], current_
         )
     
     tickets = TicketService.get_open_tickets(session=session)
-    ticket_ids = [ticket.id for ticket in tickets]
+    ticket_ids = [ticket.id for ticket in tickets if ticket.id is not None]
     tags_map = TicketTagService.get_tags_for_tickets(session, ticket_ids)
 
     return [
@@ -109,7 +109,7 @@ def accept_ticket(session: Annotated[Session, Depends(get_session)], ticket_id: 
     if not ticket:
         raise HTTPException(
             status_code= status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found or already accepted"
+            detail="Ticket not found"
         )
     tags = TicketTagService.get_ticket_tags(session, ticket.id)
     return TicketResponse(**ticket.model_dump(), tags=tags)
