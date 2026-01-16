@@ -16,7 +16,7 @@ class AuthService:
         user = session.exec(query).first()
         
         if user:
-            raise HTTPException(status_code=400,detail="Username already registered")
+            raise HTTPException(status_code=409,detail="Username already registered")
         
         
         normalized_email = user_data.email.strip().lower()
@@ -24,7 +24,7 @@ class AuthService:
         user = session.exec(query).first()
         
         if user:
-            raise HTTPException(status_code=400, detail="Email already registered")
+            raise HTTPException(status_code=409, detail="Email already registered")
         
         password_hash = get_password_hash(user_data.password)
 
